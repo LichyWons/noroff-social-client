@@ -1,3 +1,3 @@
-export const API_BASE_URL = "https://api.noroff.dev/v2";
+export const API_BASE_URL = "https://v2.api.noroff.dev";
 export const SOCIAL_BASE = `${API_BASE_URL}/social`;
 export const NOROFF_API_KEY = "<YOUR_API_KEY>";
