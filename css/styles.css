@@ -1,0 +1,4 @@
+body { font-family: system-ui, sans-serif; margin: 2rem; line-height: 1.5; }
+nav { margin-bottom: 1rem; }
+input, textarea, button { display:block; margin:.5rem 0; padding:.5rem; }
+#list { margin-top: 1rem; }
