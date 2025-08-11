@@ -13,6 +13,20 @@
 <div class="meta" id="meta"></div>
 <p id="fallback" hidden>Post unavailable or deleted.</p>
 <div id="actions"></div>
+<div id="actions"></div>
+
+<section id="edit-section" hidden>
+  <h2>Edit post</h2>
+  <form id="edit-form">
+    <input name="title" placeholder="Title" required />
+    <textarea name="body" placeholder="Content" required></textarea>
+    <input name="tags" placeholder="Tags (comma separated)" />
+    <div class="edit-buttons">
+      <button type="submit">Save</button>
+      <button type="button" id="cancel-edit">Cancel</button>
+    </div>
+  </form>
+</section>
 
   </main>
   <script type="module" src="./js/post.js"></script>
