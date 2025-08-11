@@ -21,7 +21,13 @@ function escapeHtml(s) {
 function tagsToStr(tags) { return Array.isArray(tags) ? tags.join(", ") : ""; }
 function strToTags(str) { return String(str||"").split(",").map(t=>t.trim()).filter(Boolean); }
 function getIdFromQuery() { const id = new URLSearchParams(location.search).get("id"); return id ? id.trim() : ""; }
-function setLoading(is) { if (is) { if ($content) $content.textContent="Loading…"; if ($meta) $meta.textContent=""; if ($fallback) $fallback.hidden=true; } }
+function setLoading(is) {
+  if (is) {
+    if ($content) $content.textContent = "Loading…";
+    if ($meta) $meta.textContent = "";
+    if ($fallback) $fallback.hidden = true;
+  }
+}
 
 /* ---------- view render ---------- */
 function render(post) {
@@ -37,21 +43,29 @@ function render(post) {
   if ($meta) $meta.textContent = `by ${authorName}`;
   if ($fallback) $fallback.hidden = true;
 
-  // Actions (Edit tylko dla autora — case-insensitive)
+  // Actions (Edit/Delete tylko dla autora — case-insensitive)
   if ($actions) {
     $actions.innerHTML = "";
     const me = getProfile()?.name?.toLowerCase();
     const author = (post?.author?.name || post?._author?.name || "").toLowerCase();
     console.log("Comparing names:", { me, author });
     if (me && author && me === author) {
-      const btn = document.createElement("button");
-      btn.textContent = "Edit";
-      btn.addEventListener("click", () => openEdit(post));
-      $actions.appendChild(btn);
+      // Edit
+      const btnEdit = document.createElement("button");
+      btnEdit.textContent = "Edit";
+      btnEdit.addEventListener("click", () => openEdit(post));
+      $actions.appendChild(btnEdit);
+
+      // Delete
+      const btnDelete = document.createElement("button");
+      btnDelete.textContent = "Delete";
+      btnDelete.style.marginLeft = "0.5rem";
+      btnDelete.addEventListener("click", () => onDelete(post.id));
+      $actions.appendChild(btnDelete);
     }
   }
 
-  // Prefill edytora
+  // Prefill edytora (gdy jest otwarty)
   if ($editForm) {
     $editForm.title.value = title;
     $editForm.body.value = body;
@@ -88,6 +102,23 @@ async function saveEdit(e) {
     alert("Updated");
   } catch (err) {
     alert(err?.message || "Update failed");
+  }
+}
+
+/* ---------- delete ---------- */
+async function onDelete(id) {
+  if (!id) return;
+  const ok = confirm("Are you sure you want to delete this post?");
+  if (!ok) return;
+
+  try {
+    await apiFetch(`${SOCIAL_BASE}/posts/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+    });
+    alert("Deleted");
+    location.href = "./index.html";
+  } catch (err) {
+    alert(err?.message || "Delete failed");
   }
 }
 
