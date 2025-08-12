@@ -1,6 +1,7 @@
 import { SOCIAL_BASE } from "./config.js";
 import { apiFetch } from "./http.js";
 import { getProfile } from "./storage.js";
+import { showToast, withBtnLoading, withPageLoader } from "./ux.js";
 
 const $title = document.getElementById("title");
 const $content = document.getElementById("content");
@@ -14,7 +15,7 @@ const $cancelEdit = document.getElementById("cancel-edit");
 let currentPostId = null;
 let currentPostData = null;
 
-/* ---------- helpers ---------- */
+/* helpers */
 function escapeHtml(s) {
   return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
 }
@@ -29,34 +30,28 @@ function setLoading(is) {
   }
 }
 
-/* ---------- view render ---------- */
+/* render */
 function render(post) {
   const title = post?.title || "(no title)";
   const body = post?.body || "";
   const authorName = post?.author?.name || post?._author?.name || "unknown";
-
-  console.log("Rendering post:", post);
-  console.log("Current profile:", getProfile());
 
   if ($title) $title.textContent = title;
   if ($content) $content.innerHTML = body ? `<p>${escapeHtml(body)}</p>` : `<em>(no content)</em>`;
   if ($meta) $meta.textContent = `by ${authorName}`;
   if ($fallback) $fallback.hidden = true;
 
-  // Actions (Edit/Delete tylko dla autora — case-insensitive)
+  // Actions (Edit/Delete only for author, case-insensitive)
   if ($actions) {
     $actions.innerHTML = "";
     const me = getProfile()?.name?.toLowerCase();
     const author = (post?.author?.name || post?._author?.name || "").toLowerCase();
-    console.log("Comparing names:", { me, author });
     if (me && author && me === author) {
-      // Edit
       const btnEdit = document.createElement("button");
       btnEdit.textContent = "Edit";
       btnEdit.addEventListener("click", () => openEdit(post));
       $actions.appendChild(btnEdit);
 
-      // Delete
       const btnDelete = document.createElement("button");
       btnDelete.textContent = "Delete";
       btnDelete.style.marginLeft = "0.5rem";
@@ -65,7 +60,7 @@ function render(post) {
     }
   }
 
-  // Prefill edytora (gdy jest otwarty)
+  // Prefill editor (if open)
   if ($editForm) {
     $editForm.title.value = title;
     $editForm.body.value = body;
@@ -73,7 +68,7 @@ function render(post) {
   }
 }
 
-/* ---------- edit flow ---------- */
+/* edit */
 function openEdit(post) {
   currentPostData = post;
   currentPostId = post?.id;
@@ -90,39 +85,41 @@ async function saveEdit(e) {
   const body = form.body.value.trim();
   const tags = strToTags(form.tags.value);
 
-  try {
-    const res = await apiFetch(`${SOCIAL_BASE}/posts/${encodeURIComponent(currentPostId)}`, {
-      method: "PUT",
-      json: { title, body, tags },
-    });
-    const data = res?.data ?? res;
-    currentPostData = data;
-    render(data);
-    if ($editSection) $editSection.hidden = true;
-    alert("Updated");
-  } catch (err) {
-    alert(err?.message || "Update failed");
-  }
+  await withBtnLoading(e.submitter, async () => {
+    try {
+      const res = await withPageLoader(
+        apiFetch(`${SOCIAL_BASE}/posts/${encodeURIComponent(currentPostId)}`, {
+          method: "PUT",
+          json: { title, body, tags },
+        })
+      );
+      const data = res?.data ?? res;
+      currentPostData = data;
+      render(data);
+      if ($editSection) $editSection.hidden = true;
+      showToast("Updated", "success");
+    } catch (err) {
+      showToast(err?.message || "Update failed", "error");
+    }
+  });
 }
 
-/* ---------- delete ---------- */
+/* delete */
 async function onDelete(id) {
   if (!id) return;
   const ok = confirm("Are you sure you want to delete this post?");
   if (!ok) return;
 
   try {
-    await apiFetch(`${SOCIAL_BASE}/posts/${encodeURIComponent(id)}`, {
-      method: "DELETE",
-    });
-    alert("Deleted");
+    await withPageLoader(apiFetch(`${SOCIAL_BASE}/posts/${encodeURIComponent(id)}`, { method: "DELETE" }));
+    showToast("Deleted", "success");
     location.href = "./index.html";
   } catch (err) {
-    alert(err?.message || "Delete failed");
+    showToast(err?.message || "Delete failed", "error");
   }
 }
 
-/* ---------- load ---------- */
+/* load */
 async function load() {
   const id = getIdFromQuery();
   if (!id) {
@@ -137,8 +134,6 @@ async function load() {
     const url = `${SOCIAL_BASE}/posts/${encodeURIComponent(id)}?_author=true`;
     const res = await apiFetch(url);
     const data = res?.data ?? res;
-
-    console.log("Fetched post data:", data);
 
     if (!data || !data.id) {
       if ($title) $title.textContent = "Post not found";
@@ -158,7 +153,7 @@ async function load() {
   }
 }
 
-/* ---------- init ---------- */
+/* init */
 load();
 $editForm?.addEventListener("submit", saveEdit);
 $cancelEdit?.addEventListener("click", () => {
