@@ -7,6 +7,12 @@ function updateLoaderVisibility() {
   if ($pageLoader) $pageLoader.hidden = loaderCount === 0;
 }
 
+/**
+ * Show a toast message.
+ * @param {string} message
+ * @param {"default"|"error"|"success"} [type="default"]
+ * @param {number} [timeout=3000]
+ */
 export function showToast(message, type = "default", timeout = 3000) {
   if (!$root) { alert(message); return; }
   const div = document.createElement("div");
@@ -17,14 +23,19 @@ export function showToast(message, type = "default", timeout = 3000) {
   div.addEventListener("click", () => { clearTimeout(t); div.remove(); });
 }
 
-/** Global page loader with reference counting */
+/** Increment/decrement global page loader counter. */
 export function setPageLoading(on) {
   if (on) loaderCount++;
   else loaderCount = Math.max(0, loaderCount - 1);
   updateLoaderVisibility();
 }
 
-/** Wrap a promise or thunk and manage loaderCount safely */
+/**
+ * Wrap a promise or thunk and manage the page loader.
+ * @template T
+ * @param {Promise<T> | (() => Promise<T>)} promiseOrFn
+ * @returns {Promise<T>}
+ */
 export async function withPageLoader(promiseOrFn) {
   setPageLoading(true);
   try {
@@ -35,7 +46,13 @@ export async function withPageLoader(promiseOrFn) {
   }
 }
 
-/** Disable/enable button during async action */
+/**
+ * Disable a button while the async function runs.
+ * @template T
+ * @param {HTMLButtonElement | undefined | null} btn
+ * @param {() => Promise<T>} fn
+ * @returns {Promise<T>}
+ */
 export async function withBtnLoading(btn, fn) {
   if (!btn) return fn();
   btn.disabled = true;
@@ -43,7 +60,7 @@ export async function withBtnLoading(btn, fn) {
   finally { btn.disabled = false; }
 }
 
-/* Debug helper (opcjonalnie w dev) */
+/** Dev helper to reset loader (optional). */
 export function __debugResetLoader() {
   loaderCount = 0;
   updateLoaderVisibility();
