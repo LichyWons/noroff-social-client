@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Login / Register</title>
+  <link rel="stylesheet" href="./css/styles.css" />
+</head>
+<body>
+  <nav><a href="./index.html">Feed</a></nav>
+  <main>
+    <h1>Auth</h1>
+    <section>
+      <h2>Login</h2>
+      <form id="login-form">
+        <input name="email" type="email" placeholder="email" required />
+        <input name="password" type="password" placeholder="password" required />
+        <button>Login</button>
+      </form>
+    </section>
+    <section>
+      <h2>Register</h2>
+      <form id="register-form">
+        <input name="name" placeholder="name" required />
+        <input name="email" type="email" placeholder="email (@noroff.no / @stud.noroff.no)" required />
+        <input name="password" type="password" placeholder="password" required />
+        <button>Register</button>
+      </form>
+    </section>
+  </main>
+  <script type="module" src="./js/auth.js"></script>
+</body>
+</html>
